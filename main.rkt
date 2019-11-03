@@ -90,11 +90,14 @@
       (lambda ()
         (define width (cadr sim))
         (define height (caddr sim))
-        (for ([i (in-range 1000)])
-          (set! sim ((car sim)
-                     'sim
-                     (exact-floor (* (random) width))
-                     (exact-floor (* (random) height)))))
+        (define (iter i sim)
+          (when (> i 0)
+            (iter (- i 1)
+                  ((car sim)
+                   'sim
+                   (exact-floor (* (random) width))
+                   (exact-floor (* (random) height))))))
+        (iter 1000 sim)
         (send canvas on-paint))]
      [interval 40]
      [just-once? #f])
