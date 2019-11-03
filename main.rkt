@@ -1,7 +1,7 @@
 #lang racket/gui
 
 (require "./particle.rkt")
-(require "./sim.rkt")
+(require "./sim-mutable-pairs.rkt")
 
 (define frame (new frame% [label "Falling sand"]))
 
@@ -55,7 +55,10 @@
             0 0 (* width particle-size) (* height particle-size))
       (define (iter i particles)
         (cond ((not (null? particles))
-               (define part (car particles))
+               (define part
+                 (if (pair? particles)
+                     (car particles)
+                     (mcar particles)))
                (when (not (equal? (particle-id part) 'empty))
                  (send dc set-brush (particle-colour part) 'solid)
                  (send dc draw-rectangle
@@ -63,7 +66,10 @@
                        (* (quotient i width) particle-size)
                        particle-size
                        particle-size))
-               (iter (+ i 1) (cdr particles)))))
+               (iter (+ i 1)
+                     (if (pair? particles)
+                         (cdr particles)
+                         (mcdr particles))))))
       (iter 0 (cadddr sim)))]))
 
 (define sim #f)
@@ -84,7 +90,7 @@
       (lambda ()
         (define width (cadr sim))
         (define height (caddr sim))
-        (for ([i (in-range 100)])
+        (for ([i (in-range 1000)])
           (set! sim ((car sim)
                      'sim
                      (exact-floor (* (random) width))
