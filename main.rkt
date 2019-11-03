@@ -77,19 +77,20 @@
   (send dc clear)
   (send dc set-pen "white" 1 'transparent)
   (send canvas on-paint))
-(reset 80 120)
+(reset 40 60)
 
 (new timer%
      [notify-callback
       (lambda ()
         (define width (cadr sim))
         (define height (caddr sim))
-        (set! sim ((car sim)
-                   'sim
-                   (exact-floor (* (random) width))
-                   (exact-floor (* (random) height))))
+        (for ([i (in-range 100)])
+          (set! sim ((car sim)
+                     'sim
+                     (exact-floor (* (random) width))
+                     (exact-floor (* (random) height)))))
         (send canvas on-paint))]
-     [interval 1]
+     [interval 40]
      [just-once? #f])
 
 (send frame show #t)
