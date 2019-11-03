@@ -7,6 +7,7 @@
 (define particle-id car)
 (define particle-name cadr)
 (define particle-colour caddr)
+(define particle-fn cadddr)
 
 (define particle-types
   (list (particle 'empty "Empty" (make-color 159 222 242)
@@ -33,4 +34,6 @@
 (provide particle-id)
 (provide particle-name)
 (provide particle-colour)
+(provide particle-fn)
+
 (provide particle-types)
