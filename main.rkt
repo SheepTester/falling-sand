@@ -1,6 +1,7 @@
 #lang racket/gui
 
 (require "./particle.rkt")
+(require "./sim.rkt")
 
 (define frame (new frame% [label "Falling sand"]))
 
@@ -24,12 +25,71 @@
              (lambda () (on-click button #f)))
            particle-types)))
 
+(define particle-size 5)
 (define canvas
   (new
    (class canvas%
+     ; When a mouse event occurs:
      (define/override (on-event event)
-       (display event))
+       (when (or (send event button-down? 'left)
+                 (send event dragging?))
+         (define x (quotient (send event get-x) particle-size))
+         (define y (quotient (send event get-y) particle-size))
+         (set! sim ((car sim) 'set x y current-particle))
+         (define dc (send canvas get-dc))
+         (send dc set-brush (particle-colour current-particle) 'solid)
+         (send dc draw-rectangle
+               (* x particle-size)
+               (* y particle-size)
+               particle-size
+               particle-size)))
      (super-new))
-   [parent frame]))
+   [parent frame]
+   [paint-callback
+    (lambda (canvas dc)
+      (define width (cadr sim))
+      (define height (caddr sim))
+      (send dc set-brush
+            (particle-colour (assoc 'empty particle-types)) 'solid)
+      (send dc draw-rectangle
+            0 0 (* width particle-size) (* height particle-size))
+      (define (iter i particles)
+        (cond ((not (null? particles))
+               (define part (car particles))
+               (when (not (equal? (particle-id part) 'empty))
+                 (send dc set-brush (particle-colour part) 'solid)
+                 (send dc draw-rectangle
+                       (* (remainder i width) particle-size)
+                       (* (quotient i width) particle-size)
+                       particle-size
+                       particle-size))
+               (iter (+ i 1) (cdr particles)))))
+      (iter 0 (cadddr sim)))]))
+
+(define sim #f)
+(define (reset width height)
+  (set! sim (start-sim width height
+                       (assoc 'empty particle-types)
+                       (assoc 'metal particle-types)))
+  (send canvas min-client-width (* width particle-size))
+  (send canvas min-client-height (* height particle-size))
+  (define dc (send canvas get-dc))
+  (send dc clear)
+  (send dc set-pen "white" 1 'transparent)
+  (send canvas on-paint))
+(reset 80 120)
+
+(new timer%
+     [notify-callback
+      (lambda ()
+        (define width (cadr sim))
+        (define height (caddr sim))
+        (set! sim ((car sim)
+                   'sim
+                   (exact-floor (* (random) width))
+                   (exact-floor (* (random) height))))
+        (send canvas on-paint))]
+     [interval 1]
+     [just-once? #f])
 
 (send frame show #t)
